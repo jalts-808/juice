@@ -13,10 +13,10 @@ jobs:
       - name: Checkout repository
         uses: https://github.com/cloudbees-io/checkout@v1
 
-      - name: Build and Push Docker Image using Kaniko
-        uses: https://github.com/cloudbees-io/kaniko@v1
+      - name: Build and Push Docker Image with Kaniko
+        uses: https://github.com/cloudbees-io/kaniko-build-and-push@v1
         with:
-          context: "."
-          dockerfile: "Dockerfile"
-          destination: "docker.io/jalts-808/juice:latest"
-          registry-configuration: ${{ secrets.DOCKERHUB_CONFIG_JSON }}
+          context: .
+          dockerfile: Dockerfile
+          destination: docker.io/jamesalts/juicehub:latest
+          registry-configuration: ${{ secrets.DOCKERHUB_CONFIG }}
