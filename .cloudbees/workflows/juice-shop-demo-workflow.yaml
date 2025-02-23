@@ -17,6 +17,4 @@ jobs:
         uses: docker://gcr.io/kaniko-project/executor:latest
         with:
           entrypoint: /kaniko/executor
-          destination: docker.io/jamesalts/juicehub:latest
-          registry-configuration: ${{ secrets.DOCKERHUB_CONFIG }}
-          verbosity: info
+          args: "--context=. --dockerfile=Dockerfile --destination=docker.io/jamesalts/juicehub:latest --verbosity=info --registry-configuration=${{ secrets.DOCKERHUB_CONFIG }}"
