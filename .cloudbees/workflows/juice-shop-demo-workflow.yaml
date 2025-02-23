@@ -10,11 +10,29 @@ on:
 jobs:
   build:
     steps:
+      # 1) Check out your code
       - name: Checkout repository
         uses: https://github.com/cloudbees-io/checkout@v1
 
-      - name: Build and Push Docker Image with Kaniko
-        uses: docker://gcr.io/kaniko-project/executor:latest
+      # 2) Configure Docker credentials via CloudBees' "configure-oci-credentials" action
+      #    We'll reference the property/secret names you have in your screenshot:
+      - name: Configure Docker Hub credentials
+        uses: https://github.com/cloudbees-io/configure-oci-credentials@v1
         with:
-          entrypoint: /kaniko/executor
-          args: "--context=. --dockerfile=Dockerfile --destination=docker.io/jamesalts/juicehub:latest --verbosity=info --registry-configuration=${{ secrets.DOCKERHUB_CONFIG }}"
+          registry: docker.io
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      # 3) Build & push the Docker image with Kaniko
+      #    Because we do NOT use "run:" in this step, only 'entrypoint' and 'args' are allowed.
+      #    So we pass all Kaniko CLI flags as a single multi-line "args".
+      - name: Build and Push Docker Image with Kaniko
+        uses: https://github.com/cloudbees-io/kaniko@v1
+        with:
+          # 'entrypoint' not strictly required unless you want to override default Kaniko entrypoint
+          # 'args' holds all Kaniko flags
+          args: >
+            --verbosity=info
+            --dockerfile=Dockerfile
+            --context=.
+            --destination=docker.io/${{ vars.DOCKERHUB_USERNAME }}/juicehub:latest
