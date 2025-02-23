@@ -31,4 +31,4 @@ jobs:
       # 5. Run Retire.js (SCA for Node/JS libs)
       - name: Retire.js SCA
         uses: https://github.com/cloudbees-io/retirejs-sca-scan-code@v1
-        # (Optional) 'with' inputs if you'd like to exclude directories, etc.
+        # (Optional) 'with' inputs if you'd like to exclude directories, etc.2
