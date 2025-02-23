@@ -10,41 +10,50 @@ on:
 jobs:
   build-and-scan:
     steps:
-      # 1) Clone code (pinned alpine/git)
+      # 1) Clone code (using pinned alpine/git)
       - name: Clone code
         uses: docker://alpine/git:2.36.3
         shell: sh
         run: |
           git config --global --add safe.directory /cloudbees/workspace
           git clone https://github.com/jalts-808/juice.git .
-          # If your repo is private, embed credentials or environment variables
+          # If private, embed credentials or environment variables
 
-      # 2) Install Node modules using Node 18
+      # 2) Install Node modules
       - name: Install Node modules
         uses: docker://node:18.14.2
         shell: sh
         run: |
           npm install
 
-      # 3) Build Juice Shop with Node 18
+      # 3) Build Juice Shop (npm run build:frontend)
       - name: Build the app
         uses: docker://node:18.14.2
         shell: sh
         run: |
           npm run build:frontend
-          # If your package.json doesn't have build:frontend, 
-          # use whatever script is required for your build
 
-      # 4) Gitleaks secret scan (optional, pinned)
+      # 4) Gitleaks secret scan
       - name: Gitleaks
         uses: docker://zricethezav/gitleaks:v8.17.0
         shell: sh
         run: |
+          # Exits 0 so we don't fail if secrets are found
           gitleaks detect --exit-code 0 --redact
 
-      # 5) TruffleHog secret scan (optional, pinned)
-      - name: TruffleHog
-        uses: docker://trufflesecurity/trufflehog:3.12.0
+      # 5) Retire.js (JS library SCA)
+      - name: Retire.js
+        uses: docker://retirejs/retire.js:2.2.6
         shell: sh
         run: |
-          trufflehog filesystem --no-update . || true
+          # Don't fail the job if issues found
+          retire --path . --exitwith 0
+
+      # 6) Semgrep (general code analysis)
+      - name: Semgrep
+        # Pinned to v1.23.0 as an example; adjust if needed
+        uses: docker://returntocorp/semgrep:1.23.0
+        shell: sh
+        run: |
+          # Use the p/ci ruleset and do not fail the pipeline if findings appear
+          semgrep --config p/ci --error || true
