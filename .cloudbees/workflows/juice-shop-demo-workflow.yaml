@@ -1,6 +1,6 @@
 apiVersion: automation.cloudbees.io/v1alpha1
 kind: workflow
-name: juice-shop-build-workflow
+name: juice-shop-build-and-scan
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
       - '**'
 
 jobs:
-  build:
+  build-and-scan:
     steps:
       # 1) Clone code (using alpine/git)
       - name: Clone code
@@ -17,18 +17,48 @@ jobs:
         run: |
           git config --global --add safe.directory /cloudbees/workspace
           git clone https://github.com/juice-shop/juice-shop.git .
-          # If you have a private fork, replace the URL and add credentials as needed
+          # If private, embed credentials or pass them via environment/secret
 
-      # 2) Install Node modules (using node Docker image)
+      # 2) Install Node modules (using Node Docker image)
       - name: Install Node modules
         uses: docker://node:16
         shell: sh
         run: |
           npm install
 
-      # 3) Build with correct script (npm run build:frontend)
+      # 3) Build Juice Shop (npm run build:frontend)
       - name: Build the app
         uses: docker://node:16
         shell: sh
         run: |
           npm run build:frontend
+
+      # 4) Gitleaks secret scan
+      - name: Gitleaks
+        uses: docker://zricethezav/gitleaks:v8.17.0
+        shell: sh
+        run: |
+          git config --global --add safe.directory /cloudbees/workspace
+          gitleaks detect --exit-code 0 --redact
+
+      # 5) Njsscan (Node.js SAST)
+      - name: Njsscan SAST
+        uses: docker://opensecurity/njsscan:latest
+        shell: sh
+        run: |
+          njsscan . --exit-code 0
+
+      # 6) TruffleHog secret scan
+      - name: TruffleHog
+        uses: docker://trufflesecurity/trufflehog:latest
+        shell: sh
+        run: |
+          trufflehog filesystem --no-update . || true
+
+      # 7) Retire.js (JS lib SCA)
+      - name: Retire.js
+        uses: docker://retirejs/retire.js:latest
+        shell: sh
+        run: |
+          # By default, we assume 'retire' is in PATH
+          retire --path . --exitwith 0
