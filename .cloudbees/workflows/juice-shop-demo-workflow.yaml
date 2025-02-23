@@ -14,9 +14,11 @@ jobs:
         uses: https://github.com/cloudbees-io/checkout@v1
 
       - name: Build and Push Docker Image with Kaniko
-        uses: https://github.com/cloudbees-io/kaniko-build-and-push@v1
-        with:
-          context: .
-          dockerfile: Dockerfile
-          destination: docker.io/jamesalts/juicehub:latest
-          registry-configuration: ${{ secrets.DOCKERHUB_CONFIG }}
+        uses: docker://gcr.io/kaniko-project/executor:latest
+        shell: sh
+        run: |
+          /kaniko/executor \
+          --context . \
+          --dockerfile Dockerfile \
+          --destination=docker.io/jamesalts/juicehub:latest \
+          --verbosity=info
