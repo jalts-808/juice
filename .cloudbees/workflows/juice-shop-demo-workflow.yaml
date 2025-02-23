@@ -1,0 +1,99 @@
+apiVersion: automation.cloudbees.io/v1alpha1
+kind: workflow
+name: juice-shop-demo-workflow
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    # This job runs first
+    steps:
+      - name: Checkout repository
+        uses: https://github.com/cloudbees-io/checkout@v1
+
+      - name: Build Docker image
+        uses: docker://docker:24
+        shell: sh
+        run: |
+          docker build -t juice:latest .
+          # (Optional) docker push your image if you want
+
+  build-scan:
+    # This job depends on 'build' finishing successfully
+    needs: build
+    steps:
+      - name: Gitleaks secret scan
+        uses: https://github.com/cloudbees-io/gitleaks-secret-scan-code@v1
+
+      - name: SonarQube SAST scan
+        uses: https://github.com/cloudbees-io/sonarqube-sast-scan-code@v1
+        with:
+          server-url: ${{ vars.SONARQUBE_SERVER_URL }}
+          username: ${{ secrets.SONARQUBE_USERNAME }}
+          password: ${{ secrets.SONARQUBE_PASSWORD }}
+
+      - name: Snyk SCA scan
+        uses: https://github.com/cloudbees-io/snyk-sca-scan-dependency@v1
+        with:
+          orgname: "your-snyk-org-name"
+          token: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Trivy container scan
+        uses: https://github.com/cloudbees-io/trivy-scan-container@v1
+        with:
+          image-location: "juice"
+          image-tag: "latest"
+
+      - name: Syft SBOM
+        uses: https://github.com/cloudbees-io/syft-scan@v1
+        with:
+          image: "juice:latest"
+
+      - name: ZAP DAST scan
+        uses: https://github.com/cloudbees-io/zap-dast-scan-environment@v1
+        with:
+          zap-url: ${{ vars.ZAP_SERVER_URL }}
+          token: ${{ secrets.ZAP_TOKEN }}
+          # Additional config as needed
+
+  qa-tests:
+    needs: build-scan
+    steps:
+      - name: Run QA tests
+        uses: docker://node:20
+        shell: sh
+        run: |
+          npm install
+          npm test
+          # or cypress tests, etc.
+
+  # Manual approval job
+  # Uses the CloudBees manual-approval custom job.
+  # This job requires an approval in the UI before it proceeds.
+  approval:
+    # Make sure it only runs if 'qa-tests' is successful
+    needs: qa-tests
+    delegates: https://github.com/cloudbees-io/manual-approval/custom-job.yml@v1
+    with:
+      # Provide instructions, list of approvers, etc.
+      instructions: "QA tests passed. Please approve release."
+      # For example:
+      # approvers: user1@example.com,user2@example.com
+      # disallowLaunchByUser: false
+      # notifyAllEligibleUsers: true
+
+  deploy:
+    # Waits for the manual approval job to be approved
+    needs: approval
+    steps:
+      - name: Deploy to AWS
+        uses: docker://amazon/aws-cli:latest
+        shell: sh
+        run: |
+          # Example ECR login, ECS deployment, etc.
+          # aws ecr get-login-password --region us-east-1 | ...
+          # or your specific AWS commands
+          echo "Deploying to AWS environment..."
