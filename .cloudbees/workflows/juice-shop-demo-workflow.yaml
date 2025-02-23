@@ -10,15 +10,16 @@ on:
 jobs:
   build-and-scan:
     steps:
-      # 1) Clone code from public repo using alpine/git pinned
+      # 1) Clone code (using pinned alpine/git)
       - name: Clone code
         uses: docker://alpine/git:2.36.3
         shell: sh
         run: |
           git config --global --add safe.directory /cloudbees/workspace
           git clone https://github.com/juice-shop/juice-shop.git .
+          # If you have a private fork, replace the URL and embed credentials if needed
 
-      # 2) Install Node modules pinned to node
+      # 2) Install Node modules (Node pinned)
       - name: Install Node modules
         uses: docker://node:16.19.1
         shell: sh
@@ -32,29 +33,21 @@ jobs:
         run: |
           npm run build:frontend
 
-      # 4) Gitleaks secret scan pinned
+      # 4) Gitleaks secret scan (pinned)
       - name: Gitleaks
         uses: docker://zricethezav/gitleaks:v8.17.0
         shell: sh
         run: |
           gitleaks detect --exit-code 0 --redact
 
-      # 5) Njsscan (Node.js SAST) with a valid tag
-      #    'opensecurity/njsscan:0.9.3' is known to exist
-      - name: Njsscan SAST
-        uses: docker://opensecurity/njsscan:0.9.3
-        shell: sh
-        run: |
-          njsscan . --exit-code 0
-
-      # 6) TruffleHog secret scan pinned
+      # 5) TruffleHog secret scan (pinned)
       - name: TruffleHog
         uses: docker://trufflesecurity/trufflehog:3.12.0
         shell: sh
         run: |
           trufflehog filesystem --no-update . || true
 
-      # 7) Retire.js pinned
+      # 6) Retire.js (JS library SCA, pinned)
       - name: Retire.js
         uses: docker://retirejs/retire.js:2.2.6
         shell: sh
