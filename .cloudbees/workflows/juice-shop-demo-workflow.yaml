@@ -10,6 +10,7 @@ on:
 jobs:
   build-and-scan:
     steps:
+      # 1) Clone code (pinned alpine/git)
       - name: Clone code
         uses: docker://alpine/git:2.36.3
         shell: sh
@@ -17,26 +18,30 @@ jobs:
           git config --global --add safe.directory /cloudbees/workspace
           git clone https://github.com/juice-shop/juice-shop.git .
 
+      # 2) Install Node modules (pinned node image)
       - name: Install Node modules
         uses: docker://node:16.19.1
         shell: sh
         run: |
           npm install
 
+      # 3) Build Juice Shop (npm run build:frontend)
       - name: Build the app
         uses: docker://node:16.19.1
         shell: sh
         run: |
           npm run build:frontend
 
+      # 4) Gitleaks secret scan (pinned)
       - name: Gitleaks
         uses: docker://zricethezav/gitleaks:v8.17.0
         shell: sh
         run: |
           gitleaks detect --exit-code 0 --redact
 
-      - name: Retire.js
-        uses: docker://retirejs/retire.js:2.2.6
+      # 5) TruffleHog secret scan (pinned)
+      - name: TruffleHog
+        uses: docker://trufflesecurity/trufflehog:3.12.0
         shell: sh
         run: |
-          retire --path . --exitwith 0
+          trufflehog filesystem --no-update . || true
