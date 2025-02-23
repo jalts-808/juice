@@ -41,14 +41,6 @@ jobs:
           # Exits 0 so we don't fail if secrets are found
           gitleaks detect --exit-code 0 --redact
 
-      # 5) Retire.js (JS library SCA)
-      - name: Retire.js
-        uses: docker://retirejs/retire.js:2.2.6
-        shell: sh
-        run: |
-          # Don't fail the job if issues found
-          retire --path . --exitwith 0
-
       # 6) Semgrep (general code analysis)
       - name: Semgrep
         # Pinned to v1.23.0 as an example; adjust if needed
