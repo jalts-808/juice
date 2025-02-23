@@ -1,6 +1,6 @@
 apiVersion: automation.cloudbees.io/v1alpha1
 kind: workflow
-name: juice-shop-demo-workflow
+name: juice-shop-scan-workflow
 
 on:
   push:
@@ -8,29 +8,27 @@ on:
       - '**'
 
 jobs:
-  build:
+  scan:
     steps:
-      # 1) Check out the source code
-      - name: Checkout
+      # 1. Check out the repository
+      - name: Checkout repository
         uses: https://github.com/cloudbees-io/checkout@v1
 
-      # 2) Log in to Docker Hub so Kaniko can push
-      #    Provide your DockerHub credentials here. 
-      #    'registry' is the Docker Hub registry URL. 
-      - name: Configure Docker credentials
-        uses: https://github.com/cloudbees-io/configure-oci-credentials@v1
-        with:
-          registry: "https://index.docker.io/v1/"
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      # 2. Run Gitleaks (hardcoded creds)
+      - name: Gitleaks secret scan
+        uses: https://github.com/cloudbees-io/gitleaks-secret-scan-code@v1
 
-      # 3) Use the official Kaniko container image as a Docker step
-      #    Must specify 'entrypoint' and 'args', since we do not have 'run'3.
-      - name: Build and push Docker image with Kaniko
-        uses: docker://gcr.io/kaniko-project/executor:latest
-        with:
-          entrypoint: /kaniko/executor
-          args: |
-            --context=.
-            --dockerfile=Dockerfile
-            --destination=docker.io/jamesalts/juicehub:latest
+      # 3. Run Njsscan SAST for Node code
+      - name: Njsscan (Node.js SAST)
+        uses: https://github.com/cloudbees-io/njsscan-sast-scan-code@v1
+
+      # 4. Run TruffleHog (another secrets scanner)
+      - name: TruffleHog secret scan
+        uses: https://github.com/cloudbees-io/trufflehog-secret-scan-code@v1
+        # (Optional) 'with' inputs if you want to configure thresholds or branch
+        # e.g. threshold-very-high: 3, etc.
+
+      # 5. Run Retire.js (SCA for Node/JS libs)
+      - name: Retire.js SCA
+        uses: https://github.com/cloudbees-io/retirejs-sca-scan-code@v1
+        # (Optional) 'with' inputs if you'd like to exclude directories, etc.
