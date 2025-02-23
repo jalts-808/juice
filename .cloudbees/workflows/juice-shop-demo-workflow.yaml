@@ -1,6 +1,6 @@
 apiVersion: automation.cloudbees.io/v1alpha1
 kind: workflow
-name: juice-shop-scan-workflow
+name: juice-shop-build-workflow
 
 on:
   push:
@@ -8,24 +8,33 @@ on:
       - '**'
 
 jobs:
-  scan:
-    # Permissions from the docs: grants ephemeral tokens for user AND org repos
-    permissions:
-      scm-token-own: read
-      scm-token-org: read
+  build:
+    # If you have a private repo or special restrictions, you might still need:
+    # permissions:
+    #   scm-token-own: read
+    #   scm-token-org: read
 
     steps:
-      - name: Checkout
-        uses: https://github.com/cloudbees-io/checkout@v1
+      - name: Clone code
+        # Use Alpine Git container to clone code, similar to your Django example
+        uses: docker://alpine/git
+        shell: sh
+        run: |
+          # Clone OWASP Juice Shop from GitHub (public example)
+          git clone https://github.com/juice-shop/juice-shop.git .
+          # If you want to clone your own fork or private repo, 
+          # replace the URL and possibly add credentials.
 
-      - name: Run Gitleaks secret scan
-        uses: https://github.com/cloudbees-io/gitleaks-secret-scan-code@v1
+      - name: Install Node modules
+        # Use official Node image to run 'npm install'
+        uses: docker://node:16
+        shell: sh
+        run: |
+          npm install
 
-      - name: Njsscan SAST
-        uses: https://github.com/cloudbees-io/njsscan-sast-scan-code@v1
-
-      - name: TruffleHog secret scan
-        uses: https://github.com/cloudbees-io/trufflehog-secret-scan-code@v1
-
-      - name: Retire.js SCA
-        uses: https://github.com/cloudbees-io/retirejs-sca-scan-code@v1
+      - name: Build the app
+        # Use the same Node image to build
+        uses: docker://node:16
+        shell: sh
+        run: |
+          npm run build
