@@ -9,32 +9,26 @@ on:
 
 jobs:
   build:
-    # If you have a private repo or special restrictions, you might still need:
-    # permissions:
-    #   scm-token-own: read
-    #   scm-token-org: read
-
     steps:
+      # 1) Clone code (using alpine/git)
       - name: Clone code
-        # Use Alpine Git container to clone code, similar to your Django example
         uses: docker://alpine/git
         shell: sh
         run: |
-          # Clone OWASP Juice Shop from GitHub (public example)
+          git config --global --add safe.directory /cloudbees/workspace
           git clone https://github.com/juice-shop/juice-shop.git .
-          # If you want to clone your own fork or private repo, 
-          # replace the URL and possibly add credentials.
+          # If you have a private fork, replace the URL and add credentials as needed
 
+      # 2) Install Node modules (using node Docker image)
       - name: Install Node modules
-        # Use official Node image to run 'npm install'
         uses: docker://node:16
         shell: sh
         run: |
           npm install
 
+      # 3) Build with correct script (npm run build:frontend)
       - name: Build the app
-        # Use the same Node image to build
         uses: docker://node:16
         shell: sh
         run: |
-          npm run build
+          npm run build:frontend
