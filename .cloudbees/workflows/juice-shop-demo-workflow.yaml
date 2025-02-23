@@ -10,55 +10,53 @@ on:
 jobs:
   build-and-scan:
     steps:
-      # 1) Clone code (using alpine/git)
+      # 1) Clone code with alpine/git pinned
       - name: Clone code
-        uses: docker://alpine/git
+        uses: docker://alpine/git:2.36.3
         shell: sh
         run: |
           git config --global --add safe.directory /cloudbees/workspace
           git clone https://github.com/juice-shop/juice-shop.git .
-          # If private, embed credentials or pass them via environment/secret
+          # If private, embed credentials or environment variables
 
-      # 2) Install Node modules (using Node Docker image)
+      # 2) Install Node modules (node pinned)
       - name: Install Node modules
-        uses: docker://node:16
+        uses: docker://node:16.19.1
         shell: sh
         run: |
           npm install
 
       # 3) Build Juice Shop (npm run build:frontend)
       - name: Build the app
-        uses: docker://node:16
+        uses: docker://node:16.19.1
         shell: sh
         run: |
           npm run build:frontend
 
-      # 4) Gitleaks secret scan
+      # 4) Gitleaks secret scan pinned
       - name: Gitleaks
         uses: docker://zricethezav/gitleaks:v8.17.0
         shell: sh
         run: |
-          git config --global --add safe.directory /cloudbees/workspace
           gitleaks detect --exit-code 0 --redact
 
-      # 5) Njsscan (Node.js SAST)
+      # 5) Njsscan pinned
       - name: Njsscan SAST
-        uses: docker://opensecurity/njsscan:latest
+        uses: docker://opensecurity/njsscan:0.10.0
         shell: sh
         run: |
           njsscan . --exit-code 0
 
-      # 6) TruffleHog secret scan
+      # 6) TruffleHog pinned
       - name: TruffleHog
-        uses: docker://trufflesecurity/trufflehog:latest
+        uses: docker://trufflesecurity/trufflehog:3.12.0
         shell: sh
         run: |
           trufflehog filesystem --no-update . || true
 
-      # 7) Retire.js (JS lib SCA)
+      # 7) Retire.js pinned
       - name: Retire.js
-        uses: docker://retirejs/retire.js:latest
+        uses: docker://retirejs/retire.js:2.2.6
         shell: sh
         run: |
-          # By default, we assume 'retire' is in PATH
           retire --path . --exitwith 0
