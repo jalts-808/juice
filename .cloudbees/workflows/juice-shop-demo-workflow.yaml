@@ -49,3 +49,5 @@ jobs:
         run: |
           # Use the p/ci ruleset and do not fail the pipeline if findings appear
           semgrep --config p/ci --error || true
+
+# test for syftSBOM
