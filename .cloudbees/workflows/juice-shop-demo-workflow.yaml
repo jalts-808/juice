@@ -15,8 +15,5 @@ jobs:
 
       - name: Build and Push Docker Image with Kaniko
         uses: docker://gcr.io/kaniko-project/executor:latest
-        args:
-          - "--context=."
-          - "--dockerfile=Dockerfile"
-          - "--destination=docker.io/jamesalts/juicehub:latest"
-          - "--verbosity=info"
+        with:
+          args: "--context=. --dockerfile=Dockerfile --destination=docker.io/jamesalts/juicehub:latest --verbosity=info"
