@@ -10,37 +10,39 @@ on:
 jobs:
   build-and-scan:
     steps:
-      # 1) Clone from https://github.com/jalts-808/juice
+      # 1) Clone code (pinned alpine/git)
       - name: Clone code
         uses: docker://alpine/git:2.36.3
         shell: sh
         run: |
           git config --global --add safe.directory /cloudbees/workspace
           git clone https://github.com/jalts-808/juice.git .
+          # If your repo is private, embed credentials or environment variables
 
-      # 2) Install Node modules
+      # 2) Install Node modules using Node 18
       - name: Install Node modules
-        uses: docker://node:16.19.1
+        uses: docker://node:18.14.2
         shell: sh
         run: |
           npm install
 
-      # 3) Build the app (if your package.json has 'build:frontend')
+      # 3) Build Juice Shop with Node 18
       - name: Build the app
-        uses: docker://node:16.19.1
+        uses: docker://node:18.14.2
         shell: sh
         run: |
           npm run build:frontend
-          # If you don't have 'build:frontend', use whatever script is in your package.json, e.g. 'npm run build'
+          # If your package.json doesn't have build:frontend, 
+          # use whatever script is required for your build
 
-      # 4) Gitleaks (simple secret scanner)
+      # 4) Gitleaks secret scan (optional, pinned)
       - name: Gitleaks
         uses: docker://zricethezav/gitleaks:v8.17.0
         shell: sh
         run: |
           gitleaks detect --exit-code 0 --redact
 
-      # 5) TruffleHog (another secret scanner)
+      # 5) TruffleHog secret scan (optional, pinned)
       - name: TruffleHog
         uses: docker://trufflesecurity/trufflehog:3.12.0
         shell: sh
