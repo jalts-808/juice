@@ -13,8 +13,8 @@ jobs:
       - name: Checkout repository
         uses: https://github.com/cloudbees-io/checkout@v1
 
-      - name: Build Docker image
-        uses: docker://docker:24
-        shell: sh
-        run: |
-          docker build -t juice:latest .
+      - name: Build and push Docker image with Kaniko
+        uses: https://github.com/cloudbees-io/kaniko@v1
+        with:
+          # Destination image on Docker Hub. Adjust if you have credentials or need a private repo.
+          destination: "docker.io/jalts-808/juice:latest"
