@@ -16,5 +16,6 @@ jobs:
       - name: Build and push Docker image with Kaniko
         uses: https://github.com/cloudbees-io/kaniko@v1
         with:
-          # Destination image on Docker Hub. Adjust if you have credentials or need a private repo.
           destination: "docker.io/jalts-808/juice:latest"
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
