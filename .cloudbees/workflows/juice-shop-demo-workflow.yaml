@@ -25,7 +25,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       # 3) Use the official Kaniko container image as a Docker step
-      #    Must specify 'entrypoint' and 'args', since we do not have 'run'.
+      #    Must specify 'entrypoint' and 'args', since we do not have 'run'2.
       - name: Build and push Docker image with Kaniko
         uses: docker://gcr.io/kaniko-project/executor:latest
         with:
