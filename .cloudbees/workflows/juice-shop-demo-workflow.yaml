@@ -9,32 +9,23 @@ on:
 
 jobs:
   scan:
-    # 1) Grant the pipeline both own/org read tokens, to fix 403 fetch errors.
+    # Permissions from the docs: grants ephemeral tokens for user AND org repos
     permissions:
       scm-token-own: read
       scm-token-org: read
 
     steps:
-      # 2) Check out your repository
       - name: Checkout
         uses: https://github.com/cloudbees-io/checkout@v1
 
-      # 3) Run Gitleaks secret scan
-      - name: Gitleaks secret scan
+      - name: Run Gitleaks secret scan
         uses: https://github.com/cloudbees-io/gitleaks-secret-scan-code@v1
 
-      # 4) Run Njsscan (Node.js SAST)
-      - name: Njsscan (Node.js SAST)
+      - name: Njsscan SAST
         uses: https://github.com/cloudbees-io/njsscan-sast-scan-code@v1
 
-      # 5) Run TruffleHog secret scan
       - name: TruffleHog secret scan
         uses: https://github.com/cloudbees-io/trufflehog-secret-scan-code@v1
-        # Optional 'with:' if you want thresholds, e.g.:
-        # with:
-        #   threshold-very-high: 3
 
-      # 6) Run Retire.js (SCA for Node/JS libs)
       - name: Retire.js SCA
         uses: https://github.com/cloudbees-io/retirejs-sca-scan-code@v1
-        # Optional 'with:' inputs if you'd like to exclude directories, etc.
