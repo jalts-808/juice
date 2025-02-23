@@ -9,31 +9,31 @@ on:
 
 jobs:
   scan:
-    # 1) **Add permissions** so pipeline can fetch external actions from GitHub
+    # Grant the job permission to fetch external CloudBees actions from GitHub.
     permissions:
-      scm-token-own: read
-    #   or if your repo is in an org, try:  scm-token-org: read
+      scm-token-org: read
 
     steps:
-      # 2) Check out your repository
-      - name: Checkout repository
+      # 1) Check out the repository
+      - name: Checkout
         uses: https://github.com/cloudbees-io/checkout@v1
 
-      # 3) Run Gitleaks (hardcoded creds)
+      # 2) Run Gitleaks secret scan
       - name: Gitleaks secret scan
         uses: https://github.com/cloudbees-io/gitleaks-secret-scan-code@v1
 
-      # 4) Run Njsscan SAST for Node code
+      # 3) Run Njsscan (Node.js SAST)
       - name: Njsscan (Node.js SAST)
         uses: https://github.com/cloudbees-io/njsscan-sast-scan-code@v1
 
-      # 5) Run TruffleHog (another secrets scanner)
+      # 4) Run TruffleHog secret scan
       - name: TruffleHog secret scan
         uses: https://github.com/cloudbees-io/trufflehog-secret-scan-code@v1
-        # (Optional) 'with' inputs if you want to configure thresholds, etc.
-        # e.g. threshold-very-high: 3
+        # (Optional) 'with:' inputs if you want threshold settings, e.g.:
+        # with:
+        #   threshold-very-high: 3
 
-      # 6) Run Retire.js (SCA for Node/JS libs)
+      # 5) Run Retire.js (SCA for Node/JS libs)
       - name: Retire.js SCA
         uses: https://github.com/cloudbees-io/retirejs-sca-scan-code@v1
-        # (Optional) 'with' inputs if you'd like to exclude directories, etc.
+        # (Optional) 'with:' inputs if you'd like to exclude directories, etc.
